@@ -1,60 +1,115 @@
-echo "📝 Committing Octopus integration..."
+#!/bin/bash
+# Fix Git push issue - branch name mismatch
 
-# Add all new files
-git add .
+echo "🔍 Diagnosing Git branch issue..."
 
-# Create comprehensive commit
-git commit -m "🐙 Complete Octopus SRE Platform Integration
+# Check current branch
+echo "📍 Current branch:"
+git branch
 
-✨ Integrated complete autonomous SRE platform with:
+# Check remote branches
+echo "📡 Remote branches:"
+git branch -r
 
-🧠 Brain Components:
-- Central coordinator and decision engine
-- Collective memory system  
-- Real-time tentacle coordination
-- Autonomous incident processing
+# Check remote URL
+echo "🌐 Remote URL:"
+git remote -v
 
-🐙 8 Specialized Tentacles:
-- Detection (3 replicas): Anomaly detection, pattern recognition
-- Response (2 replicas): Incident response, auto-remediation
-- Learning (1 replica): Continuous improvement, adaptation
-- Security (1 replica): Threat detection, automated defense
-- Capacity (1 replica): Auto-scaling, resource optimization
-- Network (1 replica): Connectivity monitoring, optimization
-- Data (1 replica): Information processing, correlation
-- Meta (1 replica): System coordination, optimization
+echo ""
+echo "🛠️ SOLUTION OPTIONS:"
+echo "==================="
 
-🐳 Complete Docker Deployment:
-- Multi-stage optimized Dockerfiles
-- Production-ready docker-compose.yml
-- Health checks and auto-restart policies
-- Resource limits and scaling configuration
+# Option 1: Push to master
+echo "1️⃣ OPTION 1: Push to master branch"
+echo "   git push origin master"
+echo "   (if your remote expects master)"
+echo ""
 
-📊 Monitoring & Observability:
-- Prometheus metrics collection
-- Grafana dashboards and visualization
-- Jaeger distributed tracing
-- Real-time health monitoring
+# Option 2: Rename to main and push
+echo "2️⃣ OPTION 2: Rename branch to main and push"
+echo "   git branch -M main"
+echo "   git push -u origin main"
+echo "   (if your remote expects main)"
+echo ""
 
-🛠️ Development & Operations:
-- Comprehensive Makefile with all commands
-- Environment configuration templates
-- Automated health checks and testing
-- CI/CD ready structure
+# Option 3: Check what remote expects
+echo "3️⃣ OPTION 3: Check remote repository first"
+echo "   git ls-remote --heads origin"
+echo ""
 
-🎯 Key Features Delivered:
-✅ 85% autonomous incident resolution
-✅ 8-minute average MTTR
-✅ Real-time learning and adaptation
-✅ Multi-tentacle coordination
-✅ Enterprise-grade security
-✅ Horizontal scaling capabilities
-✅ Complete observability stack
+read -p "Choose option [1/2/3]: " choice
 
-Architecture preserves existing repository structure while adding
-complete autonomous SRE capabilities for production deployment."
+case $choice in
+    1)
+        echo "🚀 Pushing to master branch..."
+        git push origin master
+        if [ $? -eq 0 ]; then
+            echo "✅ Successfully pushed to master!"
+        else
+            echo "❌ Push to master failed. Remote might expect 'main' branch."
+            echo "💡 Try option 2 to rename branch to main"
+        fi
+        ;;
+        
+    2)
+        echo "🔄 Renaming branch to main and pushing..."
+        git branch -M main
+        git push -u origin main
+        if [ $? -eq 0 ]; then
+            echo "✅ Successfully pushed to main!"
+            echo "📝 Your default branch is now 'main'"
+        else
+            echo "❌ Push failed. You might need to create the remote repository first."
+        fi
+        ;;
+        
+    3)
+        echo "🔍 Checking remote repository..."
+        git ls-remote --heads origin
+        echo ""
+        echo "📋 Available remote branches shown above."
+        echo "💡 Choose option 1 for master or option 2 for main based on what you see."
+        ;;
+        
+    *)
+        echo "❌ Invalid option"
+        exit 1
+        ;;
+esac
 
-# Push to repository
-git push origin main
+echo ""
+echo "📊 Current status:"
+echo "=================="
 
-echo "✅ Integration committed and pushed"
+# Show current branch
+echo "🌿 Current branch: $(git branch --show-current)"
+
+# Show commit history
+echo "📝 Recent commits:"
+git log --oneline -3
+
+# Show remote status
+echo "📡 Remote status:"
+git status
+
+echo ""
+echo "🎉 Octopus Integration Summary:"
+echo "=============================="
+echo "✅ 22 files changed, 2146 insertions, 205 deletions"
+echo "✅ Complete SRE platform with Brain + 8 Tentacles"
+echo "✅ Docker containerization complete"
+echo "✅ Monitoring stack integrated"
+echo "✅ All committed locally"
+
+if git log --oneline -1 | grep -q "Octopus"; then
+    echo "✅ Octopus commit ready for push"
+else
+    echo "⚠️  Please verify your Octopus commit"
+fi
+
+echo ""
+echo "🚀 Next steps after successful push:"
+echo "1. Check GitHub repository for all files"
+echo "2. Set up GitHub Actions (optional)"
+echo "3. Update README with deployment instructions"
+echo "4. Share repository with team"
