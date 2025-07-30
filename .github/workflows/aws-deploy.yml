@@ -51,12 +51,28 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
+    - name: Debug Docker Build Context
+      run: |
+        echo "=== Current working directory ==="
+        pwd
+        echo "=== Files in current directory ==="
+        ls -la
+        echo "=== Content of Dockerfile ==="
+        cat Dockerfile | head -10
+        echo "=== Looking for other Dockerfiles ==="
+        find . -name "Dockerfile" -type f
+        echo "=== Checking for Node.js Dockerfiles ==="
+        find . -name "Dockerfile" -exec grep -l "npm\|node" {} \; 2>/dev/null || echo "No Node.js Dockerfiles found"
+
     - name: Build and push Main Application
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'development' }}
       run: |
+        echo "=== About to build with this Dockerfile ==="
+        cat Dockerfile | head -5
+        
         # Build and push main Python application from root directory
         docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG .
         docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:latest .
