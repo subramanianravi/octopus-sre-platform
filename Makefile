@@ -1,69 +1,71 @@
-.PHONY: help setup clean test lint build run deploy-local deploy-aws deploy-gcp
+.PHONY: help setup clean test lint build run deploy-local status
 
-# Help target
 help:
 	@echo "🐙 Octopus SRE Platform - Available Commands"
 	@echo "=========================================="
-	@echo ""
 	@echo "🛠️  Development:"
-	@echo "  setup           Setup development environment"
 	@echo "  run             Start platform locally"
-	@echo "  test            Run all tests"
-	@echo "  lint            Run code linting"
+	@echo "  status          Check platform status"
+	@echo "  logs            Show platform logs"
+	@echo "  stop            Stop platform"
 	@echo "  clean           Clean up environment"
-	@echo ""
-	@echo "☁️  Deployment:"
-	@echo "  deploy-local    Deploy locally"
-	@echo "  deploy-aws      Deploy to AWS EKS"
-	@echo "  deploy-gcp      Deploy to GCP GKE"
 
-# Development setup
-setup:
-	@echo "🛠️ Setting up Octopus development environment..."
-	python3 -m venv venv
-	./venv/bin/pip install --upgrade pip
-	./venv/bin/pip install -r requirements.txt
-	./venv/bin/pip install -r requirements-dev.txt
-	@echo "✅ Setup complete!"
+# Check for port conflicts before starting
+check-ports:
+	@echo "🔍 Checking for port conflicts..."
+	@if lsof -i :3000 >/dev/null 2>&1; then \
+		echo "⚠️  Port 3000 is in use. Dashboard will use port 3333 instead."; \
+	fi
+	@if lsof -i :8080 >/dev/null 2>&1; then \
+		echo "⚠️  Port 8080 is in use. This may conflict with the Brain API."; \
+	fi
 
-# Testing
-test:
-	@echo "🧪 Running Octopus test suite..."
-	./venv/bin/pytest tests/ -v --cov=brain --cov=tentacles --cov-report=html
-
-# Code quality
-lint:
-	@echo "🔍 Running code quality checks..."
-	./venv/bin/flake8 brain/ tentacles/ services/
-	./venv/bin/black brain/ tentacles/ services/ --check
-	./venv/bin/mypy brain/ tentacles/ services/
-
-# Local development
-run:
+# Local development with port checking
+run: check-ports
 	@echo "🚀 Starting Octopus platform locally..."
 	docker-compose up --build
 
-# Cloud deployments
-deploy-aws:
-	@echo "☁️ Deploying to AWS EKS..."
-	./scripts/deployment/deploy-aws-eks.sh
+# Check status of all services
+status:
+	@echo "📊 Octopus Platform Status:"
+	@docker-compose ps
 
-deploy-gcp:
-	@echo "☁️ Deploying to GCP GKE..."
-	./scripts/deployment/deploy-gcp-gke.sh
+# View logs
+logs:
+	@echo "📋 Octopus Platform Logs:"
+	@docker-compose logs -f
+
+# Stop services
+stop:
+	@echo "🛑 Stopping Octopus platform..."
+	@docker-compose down
 
 # Cleanup
 clean:
 	@echo "🧹 Cleaning up Octopus environment..."
-	docker-compose down -v || true
-	docker system prune -f || true
-	rm -rf venv/ || true
+	@docker-compose down -v
+	@docker system prune -f
 
-# First-time setup
-first-time-setup: setup
-	@echo "🎉 First-time setup complete!"
-	@echo ""
-	@echo "Next steps:"
-	@echo "1. Copy .env.example to .env"
-	@echo "2. Add your OpenAI API key to .env"
-	@echo "3. Run 'make run' to start the platform"
+# Start minimal services for testing
+minimal:
+	@echo "🚀 Starting minimal Octopus services..."
+	@docker-compose up -d redis postgres qdrant prometheus
+
+# Test individual components
+test-brain:
+	@echo "🧠 Testing Brain component..."
+	@docker-compose up -d redis postgres qdrant
+	@docker-compose up octopus-brain
+
+test-tentacles:
+	@echo "🐙 Testing Tentacle components..."
+	@docker-compose up -d redis postgres qdrant octopus-brain
+	@docker-compose up detection-tentacles response-tentacles
+
+# Health check all services
+health:
+	@echo "🏥 Health checking all services..."
+	@docker-compose exec redis redis-cli ping || echo "❌ Redis unhealthy"
+	@docker-compose exec postgres pg_isready -U octopus || echo "❌ Postgres unhealthy"
+	@curl -f http://localhost:6333/health || echo "❌ Qdrant unhealthy"
+	@curl -f http://localhost:8080/health || echo "❌ Brain API unhealthy"
