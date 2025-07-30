@@ -1,7 +1,6 @@
 name: AWS Deployment Pipeline
 
 on:
-  # Manual trigger
   workflow_dispatch:
     inputs:
       environment:
@@ -14,11 +13,9 @@ on:
           - staging
           - production
   
-  # Automatic trigger on push to master
   push:
     branches: [ master ]
   
-  # Trigger on pull request
   pull_request:
     branches: [ master ]
 
@@ -74,7 +71,6 @@ jobs:
         echo "=== About to build with this Dockerfile ==="
         cat Dockerfile | head -5
         
-        # Build and push main Python application from root directory
         docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG .
         docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:latest .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG
@@ -88,25 +84,23 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'development' }}
       run: |
-        # Build and push dashboard from containers directory
-  	docker build -f containers/dashboard/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:$IMAGE_TAG .
-  	docker build -f containers/dashboard/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:latest .
-  	docker push $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:$IMAGE_TAG
-  	docker push $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:latest
+        docker build -f containers/dashboard/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:$IMAGE_TAG .
+        docker build -f containers/dashboard/Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:latest .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:latest
+        
         echo "Dashboard image pushed to: $ECR_REGISTRY/$ECR_REPOSITORY_DASHBOARD:$IMAGE_TAG"
 
     - name: Update Parameter Store
       env:
         ENVIRONMENT: ${{ github.event.inputs.environment || 'development' }}
       run: |
-        # Update deployment info for main application
         aws ssm put-parameter \
           --name "/$ENVIRONMENT/octopus/main-app/image-tag" \
           --value "${{ github.sha }}" \
           --type "String" \
           --overwrite
         
-        # Update deployment info for dashboard
         aws ssm put-parameter \
           --name "/$ENVIRONMENT/octopus/dashboard/image-tag" \
           --value "${{ github.sha }}" \
@@ -119,34 +113,27 @@ jobs:
           --type "String" \
           --overwrite
 
-    - name: Deploy to ECS (if using ECS)
+    - name: Deploy to ECS
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'development' }}
       run: |
-        # If you're using ECS, update the service
-        # Uncomment and modify as needed:
-        
-        # aws ecs update-service \
-        #   --cluster octopus-$ENVIRONMENT \
-        #   --service octopus-service \
-        #   --force-new-deployment
+        echo "ECS deployment would happen here"
+        echo "Uncomment and modify as needed:"
+        echo "aws ecs update-service --cluster octopus-$ENVIRONMENT --service octopus-service --force-new-deployment"
 
-    - name: Deploy with Docker Compose (Alternative)
+    - name: Deploy with Docker Compose
       if: ${{ github.event.inputs.environment == 'development' }}
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       run: |
-        # Alternative: Deploy using Docker Compose
         echo "ECR_REGISTRY=$ECR_REGISTRY" > .env.deploy
         echo "IMAGE_TAG=$IMAGE_TAG" >> .env.deploy
-        
-        # If you have a docker-compose.prod.yml:
-        # docker-compose -f docker-compose.prod.yml --env-file .env.deploy up -d
+        echo "Docker Compose deployment would happen here"
 
-    - name: Slack Notification (Optional)
+    - name: Slack Notification
       if: always()
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
