@@ -1,0 +1,13 @@
+    - name: Debug Docker Build Context
+      if: always()
+      run: |
+        echo "=== Current working directory ==="
+        pwd
+        echo "=== Files in current directory ==="
+        ls -la
+        echo "=== Content of Dockerfile ==="
+        cat Dockerfile | head -10
+        echo "=== Looking for other Dockerfiles ==="
+        find . -name "Dockerfile" -type f
+        echo "=== Checking for Node.js Dockerfiles ==="
+        find . -name "Dockerfile" -exec grep -l "npm\|node" {} \; 2>/dev/null || echo "No Node.js Dockerfiles found"
