@@ -1,0 +1,147 @@
+version: '3.8'
+
+services:
+  # Octopus Brain (Central Coordinator)
+  octopus-brain:
+    build:
+      context: .
+      dockerfile: containers/brain/Dockerfile
+    environment:
+      - OCTOPUS_COMPONENT=brain
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - KAFKA_BROKERS=kafka:9092
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_URL=postgresql://octopus:tentacles@postgres:5432/octopus_ocean
+      - QDRANT_URL=http://qdrant:6333
+    depends_on:
+      - kafka
+      - redis
+      - postgres
+      - qdrant
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./brain:/app/brain
+    networks:
+      - octopus_ocean
+
+  # Detection Tentacles
+  detection-tentacles:
+    build:
+      context: .
+      dockerfile: containers/tentacle/Dockerfile
+    environment:
+      - OCTOPUS_COMPONENT=tentacle
+      - TENTACLE_TYPE=detection
+      - BRAIN_URL=http://octopus-brain:8080
+    depends_on:
+      - octopus-brain
+    deploy:
+      replicas: 3
+    networks:
+      - octopus_ocean
+
+  # Response Tentacles
+  response-tentacles:
+    build:
+      context: .
+      dockerfile: containers/tentacle/Dockerfile
+    environment:
+      - TENTACLE_TYPE=response
+      - BRAIN_URL=http://octopus-brain:8080
+    depends_on:
+      - octopus-brain
+    deploy:
+      replicas: 2
+    networks:
+      - octopus_ocean
+
+  # Dashboard
+  octopus-dashboard:
+    build:
+      context: ./dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BRAIN_URL=http://localhost:8080
+    depends_on:
+      - octopus-brain
+    networks:
+      - octopus_ocean
+
+  # Infrastructure Services
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - octopus_ocean
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - octopus_ocean
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - octopus_ocean
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: octopus_ocean
+      POSTGRES_USER: octopus
+      POSTGRES_PASSWORD: tentacles
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - octopus_ocean
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - octopus_ocean
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - octopus_ocean
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=octopus
+    networks:
+      - octopus_ocean
+
+volumes:
+  postgres_data:
+  qdrant_data:
+
+networks:
+  octopus_ocean:
+    driver: bridge

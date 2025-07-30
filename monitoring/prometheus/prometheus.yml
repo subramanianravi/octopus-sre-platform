@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'octopus-brain'
+    static_configs:
+      - targets: ['octopus-brain:8080']
+    metrics_path: /metrics
+
+  - job_name: 'tentacles'
+    static_configs:
+      - targets: ['detection-tentacles:8080']
