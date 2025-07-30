@@ -14,13 +14,13 @@ on:
           - staging
           - production
   
-  # Automatic trigger on push to main
+  # Automatic trigger on push to master
   push:
-    branches: [ main ]
+    branches: [ master ]
   
   # Trigger on pull request
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 env:
   AWS_REGION: us-east-1
@@ -57,9 +57,9 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: ${{ github.event.inputs.environment || 'development' }}
       run: |
-        # Build and push main Python application
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG .
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:latest .
+        # Build and push main Python application from root directory
+        docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG .
+        docker build -f ./Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:latest .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY_MAIN:latest
         
