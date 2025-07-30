@@ -1,7 +1,5 @@
-# Use Python 3.9 slim image
 FROM python:3.9-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
@@ -27,7 +25,7 @@ COPY *.py ./
 RUN useradd --create-home --shell /bin/bash octopus
 USER octopus
 
-# Expose port (adjust as needed)
+# Expose port
 EXPOSE 8000
 
 # Health check
