@@ -52,7 +52,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Debug Docker Build Context
-      run: |
+      if: always()      run: |
         echo "=== Current working directory ==="
         pwd
         echo "=== Files in current directory ==="
