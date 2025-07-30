@@ -52,3 +52,99 @@ docs/_build/
 # Temporary files
 *.tmp
 *.temp
+
+# ==============================================
+# 🐙 Octopus SRE Platform
+# ==============================================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+logs/
+data/
+storage/
+tentacle-cache/
+brain-memory/
+collective-memory/
+models/weights/
+__pycache__/
+node_modules/
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ==============================================
+# 🐙 Octopus SRE Platform
+# ==============================================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+logs/
+data/
+storage/
+tentacle-cache/
+brain-memory/
+collective-memory/
+models/weights/
+__pycache__/
+node_modules/
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ==============================================
+# 🐙 Octopus SRE Platform
+# ==============================================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+logs/
+data/
+storage/
+tentacle-cache/
+brain-memory/
+collective-memory/
+models/weights/
+__pycache__/
+node_modules/
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ==============================================
+# 🐙 Octopus SRE Platform
+# ==============================================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+logs/
+data/
+storage/
+tentacle-cache/
+brain-memory/
+collective-memory/
+models/weights/
+__pycache__/
+node_modules/
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

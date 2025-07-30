@@ -115,7 +115,7 @@ services:
       dockerfile: containers/dashboard/Dockerfile
     container_name: octopus-dashboard
     ports:
-      - "3002:80"
+      - "3000:80"
     networks:
       - octopus_ocean
     restart: unless-stopped
