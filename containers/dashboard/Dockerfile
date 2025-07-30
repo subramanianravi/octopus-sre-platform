@@ -3,9 +3,11 @@ FROM nginx:alpine
 # Install curl for health checks
 RUN apk add --no-cache curl
 
-# Create basic dashboard HTML
-RUN mkdir -p /usr/share/nginx/html && \
-    cat > /usr/share/nginx/html/index.html << 'HTML'
+# Create the directory
+RUN mkdir -p /usr/share/nginx/html
+
+# Use COPY with heredoc (modern Docker feature)
+COPY <<HTML /usr/share/nginx/html/index.html
 <!DOCTYPE html>
 <html>
 <head>
